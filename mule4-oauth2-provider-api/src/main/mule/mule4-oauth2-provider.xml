@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:oauth2-provider="http://www.mulesoft.org/schema/mule/oauth2-provider" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/oauth2-provider http://www.mulesoft.org/schema/mule/oauth2-provider/current/mule-oauth2-provider.xsd">
+    
+    <flow name="mule4-oauth2-provider-main">
+        <http:listener config-ref="mule4-oauth2-provider-httpListenerConfig" path="/api/external/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="mule4-oauth2-provider-config" />
+        <error-handler ref="error-handlerError_Handler">
+            
+        </error-handler>
+    </flow>
+    <flow name="mule4-oauth2-provider-console">
+        <http:listener config-ref="mule4-oauth2-provider-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="mule4-oauth2-provider-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\health-check:mule4-oauth2-provider-config">
+        <logger level="INFO" doc:name="Hi, I'm up and running" doc:id="2b95c468-f409-4bf3-8c42-fce6fd7e1fe6" message="Hi, I'm up and running" />
+		<ee:transform doc:name="Hi, I'm up and running">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Hi, I'm up and running"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\validate:mule4-oauth2-provider-config">
+        <ee:transform doc:name="Extract Accesstoken" doc:id="fb2b8701-edf9-4181-b852-311b18513263">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="accessToken"><![CDATA[%dw 2.0
+output application/java
+---
+if(isEmpty(attributes.headers['authorization']) == false)
+	(attributes.headers['authorization'] splitBy ' ')[1]
+else if(isEmpty(attributes.queryParams.access_token) == false)  
+	attributes.queryParams.access_token
+else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<oauth2-provider:validate-token doc:name="Validate token" doc:id="314697fe-624f-4929-8825-59fc15fb8af0" config-ref="OAuth2_Provider_Config" accessToken="#[vars.accessToken]" />
+		<ee:transform doc:name="Validate Token" doc:id="723aa519-b21e-4ba9-aa16-fa7c3f37ea43" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Validate Token" doc:id="97144586-56a7-4d8a-a45a-94cd609897f1" message="Validate Token:#[payload]" />
+    </flow>
+    <flow name="post:\createClient:mule4-oauth2-provider-config">
+		<oauth2-provider:create-client doc:name="Create client" doc:id="e772aa39-f3fb-42b0-ae18-ca882013b4cd" config-ref="OAuth2_Provider_Config" clientId="#[attributes.headers.client_id]" type="CONFIDENTIAL" secret="#[attributes.headers.client_secret]" clientName="#[attributes.headers.client_name]" description='#[""]' principal='#[""]' redirectUris='#[["abcxyz.in"]]' authorizedGrantTypes='#[["CLIENT_CREDENTIALS"]]' failIfPresent="true">
+			<error-mapping sourceType="OAUTH2-PROVIDER:CLIENT_ALREADY_EXISTS" targetType="APP:CLIENT_ALREADY_EXISTS" />
+		</oauth2-provider:create-client>
+		<ee:transform doc:name="Transform Message">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Client Created"
+} as Object {encoding: "UTF-8", mediaType: "application/json"}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<logger level="INFO" doc:name="Client Created" doc:id="8edcdebc-9412-43b2-851c-0bfe3e73f699" message="Client Created:#[payload]" />
+    </flow>
+</mule>

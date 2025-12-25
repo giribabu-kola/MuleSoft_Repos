@@ -1,0 +1,45 @@
+# Properties to be used across all the environments. They can be overwritten.
+
+#http listener config
+http:
+  host: "0.0.0.0"
+  port: "8081"
+  validate:
+    endpoint:
+      path: "/validate"
+  create:
+    client:
+      endpoint:
+        path: "/createClient"
+
+# keystore
+keystore:
+  path: "keystore\\keystore.jks"
+
+#oauth 
+#oauth.scopes: "READ,WRITE"
+oauth:
+  provider:
+    name: "CustomProvider"
+  token.ttl: "1800"
+  scopes: ""
+  supported:
+    grant:
+      types: "AUTHORIZATION_CODE,IMPLICIT,RESOURCE_OWNER_PASSWORD_CREDENTIALS,CLIENT_CREDENTIALS"
+  authorization:
+    endpoint:
+      path: "/api/authorize"
+  access:
+    token:
+      endpoint:
+        path: "/api/access_token"
+# For Refresh Token
+#oauth.enable.token.refresh=true
+
+
+
+anypoint:
+  platform:
+    platform_base_uri: "https://anypoint.mulesoft.com/apiplatform"  
+    coreservice_base_uri: "https://anypoint.mulesoft.com/accounts"
+    analytics_base_uri: "https://analytics-ingest.anypoint.mulesoft.com"

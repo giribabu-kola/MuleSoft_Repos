@@ -1,0 +1,17 @@
+#keystore
+keystore:
+  keyPassword: "![eKTlz8RoWds=]"
+  password: "![eKTlz8RoWds=]"
+  
+#Resource
+admin:
+  name: "![EJ3j8ImdQaMTznNwSTjQ+w==]"
+  password: "![8Pw9eSJNawRhQrJn0Dy/cw==]"
+
+
+#anypoint platform
+anypoint:
+  platform:
+    client_id: ""
+    client_secret: ""
+  
