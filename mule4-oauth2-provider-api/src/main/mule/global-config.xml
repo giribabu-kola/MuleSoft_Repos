@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:spring="http://www.mulesoft.org/schema/mule/spring" xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:oauth2-provider="http://www.mulesoft.org/schema/mule/oauth2-provider" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/oauth2-provider http://www.mulesoft.org/schema/mule/oauth2-provider/current/mule-oauth2-provider.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
+	<http:listener-config name="mule4-oauth2-provider-httpListenerConfig">
+        <http:listener-connection host="${http.host}" port="${http.port}"/>
+    </http:listener-config>
+   <!--  <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="e7df604b-4a7d-4db3-978f-0921241d6ab0" >
+		<tls:key-store path="${keystore.path}" keyPassword="${secure::keystore.keyPassword}" password="${secure::keystore.password}" />	
+	</tls:context> -->
+    <apikit:config name="mule4-oauth2-provider-config" api="resource::bf563e83-f650-4880-b4f1-ea71a3fec7d7:mule4-oauth2-provider:1.0.1:raml:zip:mule4-oauth2-provider.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<configuration-properties doc:name="Configuration properties" doc:id="5bcd3a02-a661-45c6-95d6-a842b2ca36dd" file="config\common.yaml" />
+	<configuration-properties doc:name="Configuration properties" doc:id="17077df5-0b59-4ff7-adbb-e29e7eedf9d1" file="config\mule-${env}.yaml" />
+	<global-property doc:name="Global Property" doc:id="15c4563e-8650-4f22-afc2-a5e454d84c4b" name="env" value="dev" />
+	<global-property doc:name="Global Property" doc:id="a9dcbaf6-64e7-4f07-aa05-8fafefef43b5" name="mule.secret.key" value="Mule!234" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="7fcf29e6-d7b1-44d3-aa82-842929245379" file="config\secure\common-secure.yaml" key="${mule.secret.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<secure-properties:config name="Secure_Properties_Config-Env" doc:name="Secure Properties Config" doc:id="594fd073-59b0-4bf4-9fd6-e0509c3f173d" file="config\secure\mule-dev-secure.yaml" key="${mule.secret.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="09207dc4-2aca-48ea-ad8a-45338f78f53e" >
+		<os:connection />
+	</os:config>
+	<os:object-store name="multiple-users-client-store" doc:name="Object store" doc:id="a242ddf3-b269-4983-85f3-e96b90c503b8" config-ref="ObjectStore_Config" />
+	<os:object-store name="Token_Object_Store" doc:name="Object store" doc:id="277d2223-ed06-4b6a-adf3-d576a13de4c5" entryTtl="86400" config-ref="ObjectStore_Config" />
+	<os:object-store name="Refresh_Token_Object_Store" doc:name="Object store" doc:id="85335533-0307-40a1-b739-c12a0e2178c3" />
+	<os:object-store name="Authorization_Object_Store" doc:name="Object store" doc:id="127c065f-9d08-4c27-9227-9692ff57d761" entryTtl="600" config-ref="ObjectStore_Config" />
+	<spring:config name="Spring_Config" doc:name="Spring Config" doc:id="63514ad0-f75d-46a4-b140-df7c217723bc" files="spring\authentication-config.xml" />
+	<spring:security-manager doc:name="Spring Security manager" doc:id="9937d296-734b-4a8f-acd0-231cc1a551a5" >
+			<spring:delegate-security-provider name="resourceOwnerSecurityProvider" delegate-ref="resourceOwnerAuthenticationManager"/>
+		<!-- <spring:delegate-security-providers >
+		</spring:delegate-security-providers> -->
+	</spring:security-manager>
+	<spring:security-manager doc:name="Spring Security manager" doc:id="3bfae13a-07d8-49dc-babb-f9c55487cbf9" >
+			<spring:delegate-security-provider name="clientSecurityProvider" delegate-ref="clientAuthenticationManager" />
+		<!-- <spring:delegate-security-providers >
+		</spring:delegate-security-providers> -->
+	</spring:security-manager>
+	<oauth2-provider:config
+		name="OAuth2_Provider_Config" doc:name="OAuth2 Provider Config"
+		doc:id="a020370d-deec-40ae-a24a-3d442b0d9f7c"
+		providerName="${oauth.provider.name}"
+		listenerConfig="mule4-oauth2-provider-httpListenerConfig"
+		clientStore="multiple-users-client-store"
+		resourceOwnerSecurityProvider="resourceOwnerSecurityProvider"
+		clientSecurityProvider="clientSecurityProvider"
+		supportedGrantTypes="${oauth.supported.grant.types}">
+		<oauth2-provider:token-config
+			path="${oauth.access.token.endpoint.path}"
+			tokenStore="Token_Object_Store" tokenTtl="${oauth.token.ttl}">
+		</oauth2-provider:token-config>
+		<oauth2-provider:authorization-config
+			path="${oauth.authorization.endpoint.path}"
+			authorizationCodeStore="Authorization_Object_Store" />
+	</oauth2-provider:config>
+	
+</mule>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<settings>
+
+  <pluginGroups>
+    <pluginGroup>org.mule.tools</pluginGroup>
+  </pluginGroups>
+
+  <servers>
+    <server>
+      <id>MuleRepository</id>
+      <username>${nexus_username}</username>
+      <password>${nexus_password}</password>
+    </server>
+     <server>
+      <id>Repository</id>
+      <username>~~~Client~~~</username>
+      <password>${client.id}~?~${client.secret}</password>
+    </server>
+  </servers>
+
+  
