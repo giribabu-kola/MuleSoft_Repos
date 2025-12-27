@@ -1,0 +1,21 @@
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+	http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <http:listener-config name="HTTP-Listener-config">
+        <http:listener-connection port="8081" host="localhost"></http:listener-connection>
+    </http:listener-config>
+    <flow name="cicd-github-action-mainFlow">
+        <http:listener doc:id="ljcvpg" doc:name="Listener" path="/git-action" config-ref="HTTP-Listener-config"></http:listener>
+        <ee:transform doc:name="Transform" doc:id="aplohh" >
+            <ee:message >
+                <ee:set-payload doc:name="Set payload" doc:id="vuwncy" ><![CDATA[%dw 2.0
+        output application/json
+        ---
+        {
+          "Status": "Application Is Up and Running....!"
+        }]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <logger doc:name="Logger" doc:id="okbcjw" message="Message: #[payload]"/>
+    </flow>
+</mule>
